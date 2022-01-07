@@ -7,6 +7,156 @@ import numpy as np
 import ast
 import torch
 from sklearn.model_selection import train_test_split
+import pickle
+
+def glove_embedding(X):
+    import spacy
+    # import en_core_web_sm
+
+    nlp = spacy.load("en_core_web_sm")
+    from torchtext.legacy.data import Field
+    # https://stackoverflow.com/questions/41170726/add-remove-custom-stop-words-with-spacy
+    nlp.Defaults.stop_words |= {".",",","'","?",";"}
+
+    n_nodes = X.shape[0]
+    text_length = 200
+    embedding_dim = 100
+    
+
+    text_field = Field(
+        tokenize='basic_english', 
+        sequential=True,
+        lower=True,
+        pad_token='<pad>', 
+        eos_token='<eos>',
+        fix_length=text_length,
+        stop_words=nlp.Defaults.stop_words,
+        # postprocessing=lambda x: embedding_glove[x]
+    )
+    
+    # sadly have to apply preprocess manually
+    # TODO
+    preprocessed_text = pd.Series(X).apply(lambda x: text_field.preprocess(x))
+    # load fastext simple embedding with 300d
+    text_field.build_vocab(
+        preprocessed_text, 
+        vectors='glove.6B.100d' #300d
+    )
+    processed = text_field.process(preprocessed_text)
+
+    import torch.nn as nn
+    from torchtext.vocab import GloVe
+    embedding_glove = GloVe(name='6B', dim=embedding_dim)
+    embedding = nn.Embedding.from_pretrained(embedding_glove.vectors)
+    # for setting trainable to False
+    embedding.weight.requires_grad=False
+    em = embedding(processed.t())
+    em = em.reshape(n_nodes, text_length * embedding_dim)
+
+    #print(em.shape)
+    # print(em.to_sparse().shape)
+
+    return em
+    
+
+
+
+def construct_sparse_tensor(coo):
+        # https://discuss.pytorch.org/t/creating-a-sparse-tensor-from-csr-matrix/13658/5
+        '''import torch
+        import numpy as np
+        from scipy.sparse import coo_matrix'''
+
+        # coo = coo_matrix(([3,4,5], ([0,1,1], [2,0,2])), shape=(2,3))
+
+        values = coo.data
+        indices = np.vstack((coo.row, coo.col))
+
+        i = torch.LongTensor(indices)
+        v = torch.FloatTensor(values)
+        shape = coo.shape
+
+        return torch.sparse.FloatTensor(i, v, torch.Size(shape)).to_dense()
+
+def get_data(n=10000):
+    
+    path = 'datasets/book_reviews/finalv2.csv'
+    df = pd.read_csv(path)
+    df = df[:n]
+    print(len(df.index))
+    df = df.dropna(subset=['description', 'genres'])
+    print(len(df.index))
+    X_train, X_val_and_test, y_train, y_val_and_test  = train_test_split(df.description, df.genres,
+                                                    random_state=42,
+                                                    test_size=0.2)
+
+    X_val, X_test, y_val, y_test  = train_test_split(X_val_and_test, y_val_and_test,
+                                                    random_state=42,
+                                                    test_size=0.5)
+
+
+
+    return X_train, X_val, X_test, y_train, y_val, y_test
+
+def get_data_graphsage(n=10000):
+    
+    path = 'datasets/book_reviews/finalv2.csv'
+    df = pd.read_csv(path)
+    df = df[:n]
+    print(len(df.index))
+    df = df.dropna(subset=['description', 'genres'])
+    print(len(df.index))
+
+    df = df.reset_index()
+
+    edge_index_path = 'edge_index_desc_10k_clean_reset.pkl'
+    with open(edge_index_path, 'rb') as f:  # Python 3: open(..., 'rb')
+        edge_index = pickle.load(f)
+    
+    idx_train, idx_val, idx_test = split(labels=df.genres.to_numpy(), train_size=0.8, val_size=0.1, test_size=0.1)
+
+    return df.description.to_numpy(), df.genres.to_numpy(), edge_index, idx_train, idx_val, idx_test
+        
+
+def load_reviews_and_descriptions():
+    import pickle
+    # ../../
+    df = pd.read_csv('datasets/book_reviews/finalv2.csv')
+    df_subset = df[2000:8000]
+
+    with open('preprocessed_reviews_2K-8K.pkl', 'rb') as f:  # Python 3: open(..., 'rb')
+        reviews, reviews_vocab, reviews_word_to_ix = pickle.load(f)
+
+    with open('objs10000.pkl', 'rb') as f:  # Python 3: open(..., 'rb')
+        descriptions, descriptions_vocab, descriptions_word_to_ix = pickle.load(f)
+
+    label_to_idx = create_label_lookup(df_subset)
+    descriptions = descriptions[2000:8000]
+
+    cut_length = 5000
+    reviews = np.array([text[:cut_length] for text in reviews], dtype=object)
+    '''print(reviews.shape)
+    print(reviews[0].shape)
+    print(descriptions.shape)
+    print(descriptions[0].shape)'''
+    print("Joining")
+    joined = np.array([np.concatenate((r,d), axis=0) if len(d) > 0 else r for (r, d) in zip(reviews, descriptions)], dtype=object)
+    print("Splitting")
+    # joined = np.concatenate((reviews, descriptions.T), axis=1)
+    idx_train, idx_val, idx_test = split(labels=df_subset.genres.to_numpy(), train_size=0.6, val_size=0.2, test_size=0.2)
+
+    vocab = reviews_vocab | descriptions_vocab
+
+    # add special tokens to vocabulary
+    # TODO do I even need '<eos>' and '<sos>'?
+    vocab.update(['<unk>', '<pad>'])
+
+    word_to_ix = dict(zip(vocab, range(len(vocab))))
+
+
+    return joined, df_subset.genres.to_numpy(), vocab, word_to_ix, label_to_idx, idx_train, idx_val, idx_test
+
+
 
 def split(labels: np.ndarray,
           train_size: float = 0.025,

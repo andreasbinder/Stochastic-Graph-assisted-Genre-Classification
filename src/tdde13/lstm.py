@@ -5,6 +5,8 @@ from matplotlib import use
 import matplotlib.pyplot as plt
 import pandas as pd
 import torch
+from torch import tensor
+import numpy as np
 
 # Preliminaries
 
@@ -48,7 +50,7 @@ class LSTM(nn.Module):
             self.embedding = nn.Embedding(vocab_size, self.embedding_size)
 
         self.dimension = dimension
-        self.n_layers = 1
+        self.n_layers = 2
         self.max_len = max_len
         # self.hidden_dim
         self.lstm = nn.LSTM(input_size=self.embedding_size,
@@ -70,32 +72,37 @@ class LSTM(nn.Module):
 
         #self.drop = nn.Dropout(p=0.5)
 
+        self.dummy = nn.Linear(self.max_len * self.embedding_size, 10)
+
         self.fc = nn.Linear(dimension * max_len, 10)
 
     def forward(self, text):
-
+        # text_emb shape: (batch_size, max_length, embedding_size)
         text_emb = self.embedding(text)
 
         batch_size = text.size(0)
         
         # print(text_emb.shape)
 
-        use_lstm = False
+        use_lstm = True
         # hidden = self.init_hidden(batch_size)
         if use_lstm:
             out, _ = self.lstm(text_emb)
             # todo view
-            out = out.reshape(batch_size, self.max_len * self.dimension)
+            out = out.reshape(batch_size, self.max_len * self.dimension) #self.dimension
 
             out = self.fc(out)
         else:
             # out = self.mlp(text_emb)
-            out = self.single_layer(text_emb)
+            '''out = self.single_layer(text_emb)
             out = self.dropout(out)
             out = out.reshape(batch_size, self.max_len * self.dimension)
 
             out = self.fc(out)
-
+            '''
+            out = text_emb.reshape(batch_size, self.max_len * self.embedding_size)
+            # print(text_emb.shape)
+            out = self.dummy(out)
         return out
 
     def init_hidden(self, batch_size):
@@ -114,10 +121,11 @@ class LSTM(nn.Module):
         len_desc = len(desc)
 
         print("Encode Description")
-        enc_descriptions = torch.tensor([[word_to_ix[word] for word in d] for d in desc])
-        enc_labels = torch.tensor([label_to_idx[label] for label in labels]).long()
+        # enc_descriptions = torch.tensor([[word_to_ix[word] for word in d] for d in desc])
+        # enc_labels = torch.tensor([label_to_idx[label] for label in labels]).long()
 
-        
+        PAD = word_to_ix['<pad>']
+
         for epoch in range(epochs):
             #print(len(desc))
             running_train_loss = 0.0
@@ -128,16 +136,24 @@ class LSTM(nn.Module):
             # for index, i in enumerate(range(0, len_desc, batch_size)):
             for index, i in enumerate(range(0, idx_train.shape[0], batch_size)):
                 
-                # description = torch.tensor([word_to_ix[word] for word in description])
-                # label = torch.tensor(label_to_idx[label]).long().unsqueeze(dim=0)
-                # batch = enc_descriptions[i: i + batch_size]
-                # label = enc_labels[i: i + batch_size]
+
+                #description = torch.tensor([word_to_ix[word] for word in description])
+                #label = torch.tensor(label_to_idx[label]).long().unsqueeze(dim=0)
+                #batch = enc_descriptions[i: i + batch_size]
+                #label = enc_labels[i: i + batch_size]
                 
                 # print(i)
 
-                batch = enc_descriptions[idx_train[i: i + batch_size]]
-                label = enc_labels[idx_train[i: i + batch_size]]
+                batch = desc[idx_train[i: i + batch_size]]
+                label = labels[idx_train[i: i + batch_size]]
+                # TODO padding numpy
+                batch = np.array([np.pad(text, (0,self.max_len - len(text)), 'constant', constant_values=('<pad>')) for text in batch])
+                batch = torch.tensor([[word_to_ix[word] for word in item] for item in batch])
+                # TODO padding 
+                label = torch.tensor([label_to_idx[label_] for label_ in label]).long()
 
+                # batch = torch.tensor([torch.cat((text, torch.full(self.max_len - len(text), PAD))) for text in batch])
+                # np.array([np.append(d, ['<pad>' for _ in range(max_len - len(d))]) if max_len - len(d) > 0 else d for d in desc ], dtype=object)
                 output = self.forward(batch)
                 
                 #print(output.shape)
@@ -157,8 +173,16 @@ class LSTM(nn.Module):
             running_val_acc = 0.0
             for index, i in enumerate(range(0, idx_val.shape[0], batch_size)):
                 
-                batch = enc_descriptions[idx_val[i: i + batch_size]]
-                label = enc_labels[idx_val[i: i + batch_size]]
+                #batch = enc_descriptions[idx_val[i: i + batch_size]]
+                # label = enc_labels[idx_val[i: i + batch_size]]
+
+                batch = desc[idx_val[i: i + batch_size]]
+                label = labels[idx_val[i: i + batch_size]]
+                # TODO padding numpy
+                batch = np.array([np.pad(text, (0,self.max_len - len(text)), 'constant', constant_values=('<pad>')) for text in batch])
+                batch = torch.tensor([[word_to_ix[word] for word in item] for item in batch])
+                # TODO padding 
+                label = torch.tensor([label_to_idx[label_] for label_ in label]).long()
 
                 output = self.forward(batch)
                 
@@ -174,8 +198,21 @@ class LSTM(nn.Module):
             print(f"Train Loss: {running_train_loss:.4f} Train Acc {running_train_acc / idx_train.shape[0]:.3f} Val Loss {running_val_loss:.4f} Val Acc {running_val_acc / idx_val.shape[0]:.3f}")
         
         print("Finished Training")
-        batch = enc_descriptions[idx_test]
-        label = enc_labels[idx_test]
+
+        # batch = torch.tensor([[word_to_ix[word] for word in item] for item in desc[idx_test]])
+        # TODO padding 
+        # label = torch.tensor([label_to_idx[label_] for label_ in labels[idx_test]]).long()
+
+        batch = desc[idx_test]
+        label = labels[idx_test]
+        # TODO padding numpy
+        batch = np.array([np.pad(text, (0,self.max_len - len(text)), 'constant', constant_values=('<pad>')) for text in batch])
+        batch = torch.tensor([[word_to_ix[word] for word in item] for item in batch])
+        # TODO padding 
+        label = torch.tensor([label_to_idx[label_] for label_ in label]).long()
+
+        #batch = enc_descriptions[idx_test]
+        #label = enc_labels[idx_test]
 
         output = self.forward(batch)
         

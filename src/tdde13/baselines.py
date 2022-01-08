@@ -1,6 +1,7 @@
 # LSTM 
 # https://towardsdatascience.com/lstm-text-classification-using-pytorch-2c6c657f8fc0
 # https://blog.floydhub.com/a-beginners-guide-on-recurrent-neural-networks-with-pytorch/
+import typing
 from matplotlib import use
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -30,6 +31,8 @@ from collections import OrderedDict
 #import seaborn as sns
 
 from sklearn.preprocessing import LabelEncoder
+
+from tqdm import tqdm
 
 
 class MLP(nn.Module):
@@ -73,54 +76,43 @@ class MLP(nn.Module):
         return torch.sparse.FloatTensor(i, v, torch.Size(shape)).to_dense()
 
 
-    def train_mlp(self, x_train, x_test, y_train, y_test):
+    def train_mlp(self, x_train : torch.Tensor, 
+                        x_val : torch.Tensor, 
+                        x_test : torch.Tensor, 
+                        y_train : torch.Tensor, 
+                        y_val : torch.Tensor, 
+                        y_test : torch.Tensor, 
+                        hparams : dict):
         # https://medium.com/swlh/text-classification-using-scikit-learn-pytorch-and-tensorflow-a3350808f9f7
-        optimizer = optim.Adam(self.parameters(), lr=0.0002)
-        criterion = nn.CrossEntropyLoss()
-
-        epochs = 15
-        batch_size = 128
+        lr = hparams["lr"]
+        epochs = hparams["epochs"]
+        batch_size = hparams["batch_size"]
+        patience = hparams["patience"]
         
+        optimizer = optim.Adam(self.parameters(), lr=lr)
+        criterion = nn.CrossEntropyLoss()
 
         #x_train = torch.tensor(scipy.sparse.csr_matrix.todense(X_train)).float()
         #x_test = torch.tensor(scipy.sparse.csr_matrix.todense(X_test)).float()
 
-        '''x_train = self.construct_sparse_tensor(X_train.tocoo())
-        x_test = self.construct_sparse_tensor(X_test.tocoo())
-
-        y_train = LabelEncoder().fit_transform(y_train)
-        y_test = LabelEncoder().fit_transform(y_test)
-
-        y_train = torch.tensor(y_train)
-        y_test = torch.tensor(y_test)'''
+        # constant for early stopping
+        best_loss = np.inf
+        best_acc = np.NINF
+        trace_train = []
+        trace_val = []
 
         for epoch in range(epochs):
-            #print(len(desc))
+            
             running_train_loss = 0.0
             running_train_acc = 0.0
             print(f"Epoch: {epoch}")
-            c = 0
-            # for description, label in zip(desc, labels):
-            # for index, i in enumerate(range(0, len_desc, batch_size)):
-            for index, i in enumerate(range(0, x_train.shape[0], batch_size)):
+            
+            for i in tqdm(range(0, x_train.shape[0], batch_size)):
                 
-
-                #description = torch.tensor([word_to_ix[word] for word in description])
-                #label = torch.tensor(label_to_idx[label]).long().unsqueeze(dim=0)
-                #batch = enc_descriptions[i: i + batch_size]
-                #label = enc_labels[i: i + batch_size]
-                
-                # print(i)
-
                 batch = x_train[i: i + batch_size]
                 label = y_train[i: i + batch_size]
 
-                # batch = torch.tensor([torch.cat((text, torch.full(self.max_len - len(text), PAD))) for text in batch])
-                # np.array([np.append(d, ['<pad>' for _ in range(max_len - len(d))]) if max_len - len(d) > 0 else d for d in desc ], dtype=object)
                 output = self.forward(batch)
-                
-                #print(output.shape)
-                #print(label.shape)
 
                 loss = criterion(output, label)
 
@@ -134,13 +126,10 @@ class MLP(nn.Module):
 
             running_val_loss = 0.0
             running_val_acc = 0.0
-            for index, i in enumerate(range(0, x_test.shape[0], batch_size)):
+            for i in tqdm(range(0, x_val.shape[0], batch_size)):
                 
-                #batch = enc_descriptions[idx_val[i: i + batch_size]]
-                # label = enc_labels[idx_val[i: i + batch_size]]
-
-                batch = x_test[i: i + batch_size]
-                label = y_test[i: i + batch_size]
+                batch = x_val[i: i + batch_size]
+                label = y_val[i: i + batch_size]
 
                 output = self.forward(batch)
                 
@@ -148,14 +137,35 @@ class MLP(nn.Module):
                 running_val_acc += (predictions == label).sum() 
 
                 loss = criterion(output, label)
-                # optimizer.zero_grad()
-                # loss.backward()
+
                 running_val_loss += loss.item()
-                # optimizer.step()
 
-            print(f"Train Loss: {running_train_loss:.4f} Train Acc {running_train_acc / x_train.shape[0]:.3f} Val Loss {running_val_loss:.4f} Val Acc {running_val_acc / x_test.shape[0]:.3f}")
+            print(f"Train Loss: {running_train_loss:.4f} Train Acc {running_train_acc / x_train.shape[0]:.3f} Val Loss {running_val_loss:.4f} Val Acc {running_val_acc / x_val.shape[0]:.3f}")
         
-        print("Finished Training")
+            trace_train.append(running_train_loss)
+            trace_val.append(running_val_loss)
 
+            # early stopping
+            if running_val_acc > best_acc:
+                best_acc = running_val_acc
+                best_epoch = epoch
+                best_state = {key: value.cpu() for key, value in self.state_dict().items()}
+            else:
+                if epoch >= best_epoch + patience:
+                    break
+
+        # load and save best model
+        self.load_state_dict(best_state)
+        torch.save(best_state, 'model.pt')
+
+        # final evaluation
+        predictions = self.forward(x_test).argmax(axis=1)
+                
+        test_acc = (predictions == y_test).sum() 
+
+        print(f"Test Acc {test_acc / x_test.shape[0]:.3f}")  
+
+        print("Finished Training")
+        return trace_train, trace_val
 
 

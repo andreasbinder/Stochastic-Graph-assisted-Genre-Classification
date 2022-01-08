@@ -1,11 +1,20 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 def plot_histogram(array):
 
-    import matplotlib.pyplot as plt
     rng = np.random.RandomState(10)  # deterministic random data
     a = np.hstack((rng.normal(size=1000),
                 rng.normal(loc=5, scale=2, size=1000)))
     _ = plt.hist([len(x) for x in array], bins='auto')  # arguments are passed to np.histogram
     plt.title("Histogram with 'auto' bins")
+    plt.show()
+
+def plot_curves(trace_train, trace_val):
+    plt.plot(trace_train, label='train')
+    plt.plot(trace_val, label='validation')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend()
+    plt.grid(True)
     plt.show()

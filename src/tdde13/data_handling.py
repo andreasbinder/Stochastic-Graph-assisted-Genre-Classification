@@ -157,6 +157,12 @@ def load_reviews_and_descriptions():
     return joined, df_subset.genres.to_numpy(), vocab, word_to_ix, label_to_idx, idx_train, idx_val, idx_test
 
 
+# type(ast.literal_eval(first.reviews)[0])
+def join_str(review):
+    review = ast.literal_eval(review)
+    # type(first.reviews)
+    review_str = ''.join(review)
+    return review_str
 
 def split(labels: np.ndarray,
           train_size: float = 0.025,

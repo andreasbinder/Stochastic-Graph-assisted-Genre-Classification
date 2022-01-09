@@ -12,7 +12,7 @@ import pickle
 def glove_embedding(X):
     import spacy
     # import en_core_web_sm
-
+    # https://towardsdatascience.com/deep-learning-for-nlp-with-pytorch-and-torchtext-4f92d69052f
     nlp = spacy.load("en_core_web_sm")
     from torchtext.legacy.data import Field
     # https://stackoverflow.com/questions/41170726/add-remove-custom-stop-words-with-spacy

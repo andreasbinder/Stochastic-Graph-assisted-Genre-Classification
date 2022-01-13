@@ -27,7 +27,7 @@
     :alt: Project generated with PyScaffold
     :target: https://pyscaffold.org/
 
-.. image:: https://anaconda.org/pyg/pyg/badges/version.svg
+.. image:: https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=for-the-badge&logo=PyTorch&logoColor=white
     :alt: PyG
     :target: https://github.com/pyg-team/pytorch_geometric
 

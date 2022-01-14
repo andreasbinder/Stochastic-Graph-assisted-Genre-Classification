@@ -43,8 +43,7 @@
 Stochastic-Graph-assisted-Genre-Classification
 ======
 
-
-    Add a short description here!
+Code to reproduce and extend the results of the report Stochastic-Graph-assisted-Genre-Classification
 
 =====
 Run the code
@@ -61,10 +60,11 @@ Requirements & Installation
 =====
 
 Run 
-.. code-block:: bash
+.. 
+    code-block:: bash
 
-   $ conda env create --file envname.yml
-   $ cd Stochastic-Graph-assisted-Genre-Classification
+   $ conda env create --file envname.yml | 
+   $ cd Stochastic-Graph-assisted-Genre-Classification | 
    $ pip install -e .
 
 

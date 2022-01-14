@@ -23,32 +23,60 @@
         :alt: Twitter
         :target: https://twitter.com/tdde13
 
-.. image:: https://img.shields.io/badge/-PyScaffold-005CA0?logo=pyscaffold
-    :alt: Project generated with PyScaffold
-    :target: https://pyscaffold.org/
+    .. image:: https://img.shields.io/badge/-PyScaffold-005CA0?logo=pyscaffold
+        :alt: Project generated with PyScaffold
+        :target: https://pyscaffold.org/
 
 .. image:: https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=for-the-badge&logo=PyTorch&logoColor=white
     :alt: PyG
     :target: https://github.com/pyg-team/pytorch_geometric
 
+.. image:: https://img.shields.io/badge/scikit--learn-%23F7931E.svg?style=for-the-badge&logo=scikit-learn&logoColor=white
+    :alt: scikit-learn
+    :target: https://scikit-learn.org/stable/index.html
+
+
 
 |
 
 ======
-tdde13
+Stochastic-Graph-assisted-Genre-Classification
 ======
 
 
     Add a short description here!
 
+=====
+Run the code
+=====
 
-A longer description of your project goes here...
+
+The easiest way to get started is by looking at the notebook Stochastic-Graph-assisted-Genre-Classification.ipynb
 
 
 .. _pyscaffold-notes:
 
-Note
-====
+=====
+Requirements & Installation
+=====
 
-This project has been set up using PyScaffold 4.1.1. For details and usage
-information on PyScaffold see https://pyscaffold.org/.
+Run 
+.. code-block:: bash
+
+   $ conda env create --file envname.yml
+   $ cd Stochastic-Graph-assisted-Genre-Classification
+   $ pip install -e .
+
+
+=====
+Data
+=====
+You can find the data used for the experiments `here <https://drive.google.com/file/d/18CnhsFrRK5FN6QcwjNlYW8P5apzd-nBD/view?usp=sharing>`_ 
+
+The file is expected to be placed in ``datasets/book_review``, so please create the directory if it does not exist.  
+
+
+=====
+Contact
+=====
+Please contact andreasjosef.binder@tum.de in case you have any questions.

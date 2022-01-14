@@ -59,13 +59,11 @@ The easiest way to get started is by looking at the notebook Stochastic-Graph-as
 Requirements & Installation
 =====
 
-Run 
-.. 
-    code-block:: bash
+Run the following commands
 
-   $ conda env create --file envname.yml | 
-   $ cd Stochastic-Graph-assisted-Genre-Classification | 
-   $ pip install -e .
+$ conda env create --file envname.yml 
+$ cd Stochastic-Graph-assisted-Genre-Classification 
+$ pip install -e .
 
 
 =====

@@ -61,8 +61,8 @@ Requirements & Installation
 
 Run the following commands
 
-$ conda env create --file envname.yml 
-$ cd Stochastic-Graph-assisted-Genre-Classification 
+$ conda env create --file envname.yml |
+$ cd Stochastic-Graph-assisted-Genre-Classification |
 $ pip install -e .
 
 

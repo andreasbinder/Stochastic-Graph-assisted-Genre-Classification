@@ -27,7 +27,7 @@ class GraphSAGE(nn.Module):
 
         self.dropout = dropout
         self.conv1 = SAGEConv(in_dim, hidden_dim)
-        self.conv2 = SAGEConv(hidden_dim, hidden_dim)
+        self.conv2 = SAGEConv(hidden_dim, out_dim) # TODO hidden_dim
         self.conv3 = SAGEConv(hidden_dim, out_dim)
         
     def forward(self, data):
@@ -98,6 +98,8 @@ class GraphSAGE(nn.Module):
 
         
         # https://discuss.pytorch.org/t/how-to-define-train-mask-val-mask-test-mask-in-my-own-dataset/56289/5
+        # neighborloader example
+        # - https://github.com/pyg-team/pytorch_geometric/blob/master/examples/reddit.py
         train_loader = NeighborLoader(
             data,
             # data.subgraph(torch.LongTensor(data.train_mask)),
@@ -161,8 +163,9 @@ class GraphSAGE(nn.Module):
                 # forward pass
                 out = self.forward(batch)
                 
-
-                # assert False, "training"
+                '''print(out.shape)
+                print(batch.y.shape)
+                assert False, "training"'''
                 # loss caculation and backward pass
                 loss = criterion(out, batch.y)
                 running_train_loss += loss.item()

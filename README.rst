@@ -50,7 +50,7 @@ Run the code
 =====
 
 
-The easiest way to get started is by looking at the notebook ``Stochastic-Graph-assisted-Genre-Classification.ipyn``
+The easiest way to get started is by looking at the notebook ``Stochastic-Graph-assisted-Genre-Classification.ipynb``
 
 
 .. _pyscaffold-notes:

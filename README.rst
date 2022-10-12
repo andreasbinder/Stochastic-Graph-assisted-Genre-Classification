@@ -61,10 +61,10 @@ Requirements & Installation
 
 Run the following commands. Install the following requirements, preferably via anaconda:
 
-::
-    torch
-    pyg
-    sklearn
+:: 
+   torch
+   pyg
+   sklearn
 
 Also, go change directory
 

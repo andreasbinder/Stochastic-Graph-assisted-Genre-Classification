@@ -163,9 +163,6 @@ class GraphSAGE(nn.Module):
                 # forward pass
                 out = self.forward(batch)
                 
-                '''print(out.shape)
-                print(batch.y.shape)
-                assert False, "training"'''
                 # loss caculation and backward pass
                 loss = criterion(out, batch.y)
                 running_train_loss += loss.item()

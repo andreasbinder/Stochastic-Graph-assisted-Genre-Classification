@@ -59,9 +59,12 @@ The easiest way to get started is by looking at the notebook ``Stochastic-Graph-
 Requirements & Installation
 =====
 
-Run the following commands. Create a conda environment first
+Run the following commands. Install the following requirements, preferably via anaconda:
 
-``$ conda env create --file envname.yml``
+::
+    torch
+    pyg
+    sklearn
 
 Also, go change directory
 

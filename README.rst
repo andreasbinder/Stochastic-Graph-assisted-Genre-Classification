@@ -61,15 +61,15 @@ Requirements & Installation
 
 Run the following commands. Create a conda environment first
 
-$ conda env create --file envname.yml
+``$ conda env create --file envname.yml``
 
 Also, go change directory
 
-$ cd Stochastic-Graph-assisted-Genre-Classification
+``$ cd Stochastic-Graph-assisted-Genre-Classification``
 
 Finally, install the package
 
-$ pip install -e .
+``$ pip install -e .``
 
 
 =====
